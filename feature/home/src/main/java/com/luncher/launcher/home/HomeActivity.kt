@@ -300,27 +300,34 @@ class HomeActivity : Activity() {
     }
 
     /**
-     * Built-in curated picks need no API key, account, or background service. Selecting a title
-     * opens a web search so the user can check streaming availability in their region.
+     * Service shortcuts use apps exposed by Android TV's launcher. Odyssey cannot read private
+     * watch history from Netflix or Apple TV; this row opens the actual installed service app.
      */
     private fun showRecommendations() {
         val row = findViewById<LinearLayout>(R.id.home_recommendation_row)
-        val picks = listOf(
-            Triple("Interstellar", "MOVIE · SCI-FI", "where to watch Interstellar"),
-            Triple("Dune: Part Two", "MOVIE · ADVENTURE", "where to watch Dune Part Two"),
-            Triple("The Martian", "MOVIE · SCI-FI", "where to watch The Martian"),
-            Triple("Stranger Things", "SERIES · MYSTERY", "where to watch Stranger Things"),
-            Triple("The Last of Us", "SERIES · DRAMA", "where to watch The Last of Us"),
-            Triple("Planet Earth", "SERIES · NATURE", "where to watch Planet Earth")
+        val apps = installedApps.tvApps()
+        val services = listOf(
+            Triple("Netflix", "Open Netflix", listOf("com.netflix.ninja", "netflix")),
+            Triple("Apple TV", "Open Apple TV", listOf("com.apple.atve.androidtv.appletv", "com.apple.atve.sony.appletv", "apple tv", "appletv"))
         )
         row.removeAllViews()
-        picks.forEach { (title, category, search) ->
-            row.addView(makeHomeCard("$title\n$category", "Find streaming options") {
-                try {
-                    val url = "https://www.google.com/search?q=" + Uri.encode(search)
-                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-                } catch (_: ActivityNotFoundException) {
-                    // Keep the launcher usable if this device has no browser.
+        services.forEach { (title, description, identifiers) ->
+            val app = apps.firstOrNull { candidate ->
+                val packageName = candidate.launchable.packageName.lowercase(Locale.ROOT)
+                val label = candidate.label.lowercase(Locale.ROOT)
+                identifiers.any { id -> packageName.contains(id) || label.contains(id) }
+            }
+            row.addView(makeHomeCard(title + if (app == null) "\\nNot detected" else "\\nReady to open",
+                if (app == null) "$title not detected among TV apps" else description) {
+                if (app != null) {
+                    open(app)
+                } else {
+                    try {
+                        val search = Uri.encode("$title Android TV app")
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/search?q=$search&c=apps")))
+                    } catch (_: ActivityNotFoundException) {
+                        // No store/browser available; keep the launcher usable.
+                    }
                 }
             })
         }
