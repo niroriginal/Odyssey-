@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- The app name shown by Android TV. -->
-    <string name="app_name" translatable="false">Odyssy</string>
+    <string name="app_name" translatable="false">Odyssey</string>
 </resources>
