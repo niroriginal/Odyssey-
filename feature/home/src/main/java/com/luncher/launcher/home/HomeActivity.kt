@@ -4,13 +4,18 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.Typeface
+import android.net.Uri
 import android.os.Build
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.StateListDrawable
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.View
+import android.view.Gravity
 import android.widget.TextView
+import android.widget.LinearLayout
 import android.window.OnBackInvokedDispatcher
 import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.ThemeAppearance
@@ -97,6 +102,7 @@ class HomeActivity : Activity() {
         empty = findViewById(R.id.home_empty)
         clockView = findViewById(R.id.home_clock)
         settingsEntry = findViewById(R.id.home_settings)
+        showRecommendations()
         settingsEntry.setOnClickListener { openSettings() }
         wallpaper = HomeWallpaper(this, graph.wallpaper, ::showOnPicture)
         move = MoveMode(
@@ -171,6 +177,7 @@ class HomeActivity : Activity() {
         // Unchanged, as on most returns to the home screen: keep the tiles, their images and focus.
         if (arranged.shown != shown) show(arranged.shown)
         showWhyEmpty(arranged)
+        showRecentApps(arranged.shown)
     }
 
     private fun show(appearance: Appearance) {
@@ -269,6 +276,101 @@ class HomeActivity : Activity() {
             getString(R.string.home_all_hidden, getString(SettingsR.string.settings_title), getString(SettingsR.string.settings_hide_apps))
         }
         empty.visibility = View.VISIBLE
+    }
+
+    /**
+     * Recently launched apps are stored locally on this device. The history never leaves Odyssey.
+     */
+    private fun showRecentApps(availableApps: List<InstalledApp>) {
+        val section = findViewById<View>(R.id.home_recent_section)
+        val row = findViewById<LinearLayout>(R.id.home_recent_row)
+        val recentPackages = getSharedPreferences("odyssey_home", MODE_PRIVATE)
+            .getString("recent_packages", "")
+            .orEmpty()
+            .split("|")
+            .filter { it.isNotBlank() }
+        val byPackage = availableApps.associateBy { it.launchable.packageName }
+        val recent = recentPackages.mapNotNull { byPackage[it] }
+            .distinctBy { it.launchable.packageName }.take(8)
+        row.removeAllViews()
+        section.visibility = if (recent.isEmpty()) View.GONE else View.VISIBLE
+        for (app in recent) {
+            row.addView(makeHomeCard(app.label, "Recently played") { open(app) })
+        }
+    }
+
+    /**
+     * Service shortcuts use apps exposed by Android TV's launcher. Odyssey cannot read private
+     * watch history from Netflix or Apple TV; this row opens the actual installed service app.
+     */
+    private fun showRecommendations() {
+        val row = findViewById<LinearLayout>(R.id.home_recommendation_row)
+        val apps = installedApps.tvApps()
+        val services = listOf(
+            Triple("Netflix", "Open Netflix", listOf("com.netflix.ninja", "netflix")),
+            Triple("Apple TV", "Open Apple TV", listOf("com.apple.atve.androidtv.appletv", "com.apple.atve.sony.appletv", "apple tv", "appletv"))
+        )
+        row.removeAllViews()
+        services.forEach { (title, description, identifiers) ->
+            val app = apps.firstOrNull { candidate ->
+                val packageName = candidate.launchable.packageName.lowercase(Locale.ROOT)
+                val label = candidate.label.lowercase(Locale.ROOT)
+                identifiers.any { id -> packageName.contains(id) || label.contains(id) }
+            }
+            row.addView(makeHomeCard(title + if (app == null) "\\nNot detected" else "\\nReady to open",
+                if (app == null) "$title not detected among TV apps" else description) {
+                if (app != null) {
+                    open(app)
+                } else {
+                    try {
+                        val search = Uri.encode("$title Android TV app")
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/search?q=$search&c=apps")))
+                    } catch (_: ActivityNotFoundException) {
+                        // No store/browser available; keep the launcher usable.
+                    }
+                }
+            })
+        }
+    }
+
+    /** Large rounded cards with D-pad focus feedback, shared by the home rows. */
+    private fun makeHomeCard(text: String, description: String, action: () -> Unit): TextView {
+        val density = resources.displayMetrics.density
+        fun dp(value: Int) = (value * density + 0.5f).toInt()
+        return TextView(this).apply {
+            this.text = text
+            contentDescription = "$text. $description"
+            textSize = 14f
+            setTypeface(null, Typeface.BOLD)
+            setTextColor(Color.WHITE)
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(16), dp(10), dp(16), dp(10))
+            minWidth = dp(150)
+            minimumHeight = dp(54)
+            maxWidth = dp(230)
+            isFocusable = true
+            isFocusableInTouchMode = true
+            isClickable = true
+            val normal = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(12).toFloat()
+                setColor(Color.rgb(35, 39, 52))
+            }
+            val focused = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(12).toFloat()
+                setColor(Color.rgb(61, 91, 160))
+                setStroke(dp(2), Color.WHITE)
+            }
+            background = StateListDrawable().apply {
+                addState(intArrayOf(android.R.attr.state_focused), focused)
+                addState(intArrayOf(), normal)
+            }
+            setOnClickListener { action() }
+            layoutParams = LinearLayout.LayoutParams(dp(190), dp(68)).apply {
+                marginEnd = dp(12)
+            }
+        }
     }
 
     private fun open(app: InstalledApp) {

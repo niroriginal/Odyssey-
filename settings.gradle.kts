@@ -16,5 +16,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Luncher"
+rootProject.name = "Odyssey"
 include(":app", ":domain", ":ui", ":platform", ":feature:home", ":feature:settings")
