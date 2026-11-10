@@ -2,22 +2,12 @@
 <!-- Merged into the window's content FrameLayout: one view level less to lay out and draw. -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- The top bar stays in place; the tiles scroll in the space below it. Left to right in every
-         language: where the clock, the settings entry and the tiles go is for settings to decide,
-         not the language. So a right-to-left language mirrors only the settings panels, and a
-         future carousel (a RecyclerView, say) doesn't mirror either. Texts still read in their
-         own direction, lined up at the left (Theme.Luncher). -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layoutDirection="ltr"
         android:orientation="vertical">
 
-        <!-- The clock at one edge, the settings entry (later e.g. status indicators too) at the
-             other: which is where, TopBarView decides from the appearance, and moves them. Not
-             focusable itself: D-pad Up from the tiles reaches only what's focusable in it. While
-             the user moves an app, the mode's title and key hint take the place of the clock and
-             the settings entry. -->
         <com.luncher.launcher.home.TopBarView
             android:id="@+id/home_top_bar"
             android:layout_width="match_parent"
@@ -28,7 +18,6 @@
             android:paddingTop="@dimen/home_padding_vertical"
             android:paddingRight="@dimen/home_padding_horizontal">
 
-            <!-- Time and date share a baseline, side by side in the order the appearance gives. -->
             <com.luncher.launcher.home.ClockView
                 android:id="@+id/home_clock"
                 android:layout_width="0dp"
@@ -54,9 +43,6 @@
                     android:textSize="@dimen/home_date_text" />
             </com.luncher.launcher.home.ClockView>
 
-            <!-- As tall as the settings entry it replaces, so the tiles below stay where they are.
-                 What the hint leaves of the bar: where a language's title and hint don't both
-                 fit (a narrow screen, large text), the title ends in "…", never the hint. -->
             <com.luncher.launcher.home.OutlinedTextView
                 android:id="@+id/home_move_title"
                 android:layout_width="0dp"
@@ -82,7 +68,6 @@
                 android:textSize="@dimen/home_move_hint_text"
                 android:visibility="gone" />
 
-            <!-- Opens the settings panel. Focusable, so Up from the first row of tiles reaches it. -->
             <ImageView
                 android:id="@+id/home_settings"
                 android:layout_width="@dimen/home_settings_size"
@@ -94,7 +79,84 @@
                 android:src="@drawable/home_settings" />
         </com.luncher.launcher.home.TopBarView>
 
-        <!-- Tiles may zoom past the padding, and scroll through it up to the top bar. -->
+        <!-- PS5-inspired media navigation: visual section labels, not fake buttons. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="34dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingLeft="@dimen/home_padding_horizontal"
+            android:paddingRight="@dimen/home_padding_horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="28dp"
+                android:text="MEDIA"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="28dp"
+                android:text="APPS"
+                android:textColor="#8994A8"
+                android:textSize="12sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LIBRARY"
+                android:textColor="#8994A8"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Cinematic feature panel. Kept informational until real service integrations exist. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="108dp"
+            android:layout_marginLeft="@dimen/home_padding_horizontal"
+            android:layout_marginTop="4dp"
+            android:layout_marginRight="@dimen/home_padding_horizontal"
+            android:layout_marginBottom="8dp"
+            android:background="#18243A"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            android:paddingLeft="22dp"
+            android:paddingTop="12dp"
+            android:paddingRight="22dp"
+            android:paddingBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ODYSSEY  •  ENTERTAINMENT"
+                android:textColor="#70A7FF"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.12" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="Your entertainment starts here."
+                android:textColor="#FFFFFF"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="Choose a streaming app below."
+                android:textColor="#B7C2D4"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Installed TV apps remain real launchable tiles, with the existing D-pad and menu logic. -->
         <com.luncher.launcher.home.AppTilesView
             android:id="@+id/home_apps"
             android:layout_width="match_parent"
