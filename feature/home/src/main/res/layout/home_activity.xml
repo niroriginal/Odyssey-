@@ -134,7 +134,7 @@
                 android:layout_height="wrap_content"
                 android:text="ODYSSEY  •  ENTERTAINMENT"
                 android:textColor="#70A7FF"
-                android:textSize="10sp"
+                android:textSize="11sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.12" />
 
